@@ -182,6 +182,30 @@ sprite_list *get_sprite(sprite_list *list, int pos)
 	return (list);
 }
 
+void degat(sprite_list *player, int mod)
+{
+	static int timer = 0;
+	static int damaged = 0;
+        sfColor color = {255, 0, 0, 128};
+	sfColor color2 = {255, 255, 255, 255};
+
+	if (mod == 1 && !damaged) {
+		player->life -= 1;
+		damaged = 1;
+	}
+	if (timer < 180 && damaged) {
+		if (timer % 10 == 0) {
+			sfSprite_setColor(player->sprite, color);
+		} else if (timer % 5 == 0 && timer % 10 != 0) {
+			sfSprite_setColor(player->sprite, color2);
+		}
+		timer += 1;
+	} else if (timer >= 180) {
+		timer = 0;
+		damaged = 0;
+	}
+}
+
 void add_list(sprite_list **head, sprite_list *new_node)
 {
 	sprite_list *last = *head;
@@ -269,7 +293,7 @@ int is_on_platform(sfSprite *player, sprite_list *plat)
 	return (1);
 }
 
-void apply_action(sprite_list *list, sprite_list *plat, sprite_list *end, int timer)
+void apply_action(sprite_list *list, sprite_list *plat, int timer)
 {
 	sfSprite *player = get_sprite(list, 2)->sprite;
 	sfSprite *back = get_sprite(list, 0)->sprite;
@@ -293,8 +317,6 @@ void apply_action(sprite_list *list, sprite_list *plat, sprite_list *end, int ti
 	if (!is_fall && !is_jump) {
 		sfSprite_move(player, fall);
 	}
-	if (is_on_end(player, end))
-		write(1, "Win !\n", 6);
 }
 
 int is_on_spike(sfSprite *player, sprite_list *spike)
@@ -305,7 +327,7 @@ int is_on_spike(sfSprite *player, sprite_list *spike)
 	
         while (spike != NULL) {
                 spike_pos = sfSprite_getPosition(spike->sprite);
-                if (y > spike_pos.y && spike_pos.y > player_co.y - 100 && (player_co.x + 100 > spike_pos.x && player_co.x < spike_pos.x + 75)) {
+                if (y > spike_pos.y + 20 && spike_pos.y > player_co.y - 100 && (player_co.x + 100 > spike_pos.x && player_co.x < spike_pos.x + 65)) {
                         return(1);
                 }
                 spike = spike->next;
@@ -350,7 +372,7 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy)
 		}
 	        if (shoot->mod == 1 && shoot_pos.x > p_pos.x + 30 && shoot_pos.x < p_pos.x + 60 && shoot_pos.y > p_pos.y -20 && shoot_pos.y < p_pos.y + 149) {
 			sfSprite_move(shoot->sprite, move);
-			p->life -= 1;
+		        degat(p, 1);
 		}
 		enemy = head;
 	        shoot = shoot->next;
@@ -360,7 +382,7 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy)
 
 void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy, int timer)
 {
-	sfSprite *player = get_sprite(list, 2)->sprite;
+	sprite_list *p = get_sprite(list, 2);
 
 	if (timer % 7 == 0) {
 		while (enemy != NULL) {
@@ -368,8 +390,8 @@ void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy,
 			enemy = enemy->next;
 		}
 	}
-	(void) is_on_spike(player, spike);
-	(void) is_on_enemy(player, enemy);
+	if (is_on_spike(p->sprite, spike) || is_on_enemy(p->sprite, enemy))
+		degat(p, 1);
 }
 
 void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, sprite_list **enemy, char *map)
@@ -463,6 +485,21 @@ void enemy_shoot(sprite_list **shoot, sprite_list *enemy)
 	}
 }
 
+void is_looser(sprite_list *player)
+{
+	sfVector2f p = sfSprite_getPosition(player->sprite);
+
+	if (p.y > 800 || player->life < 0)
+		printf("%s\n", "C'est la mort fdp");
+}
+
+void is_winner(sprite_list *player, sprite_list *end)
+{
+	if (is_on_end(player->sprite, end)) {
+		printf("%s\n", "C'est la win");
+	}
+}
+
 int main(int argc, char **argv)
 {
 	sfVideoMode mode = {1280, 800, 32};
@@ -502,7 +539,7 @@ int main(int argc, char **argv)
 				add_shoot(&shoot, get_sprite(list, 2)->sprite, 0);
 		}
 		enemy_shoot(&shoot, enemy); 
-        	apply_action(list, plat, end, timer);
+        	apply_action(list, plat, timer);
 		apply_action_two(list, spike, enemy, timer);
 		plat_mov(plat);
 		plat_mov(end);
@@ -510,6 +547,9 @@ int main(int argc, char **argv)
 		plat_mov(enemy);
 		shoot_mov(shoot);
 		is_on_shoot(get_sprite(list, 2), shoot, enemy);
+		degat(get_sprite(list, 2), 0);
+		is_winner(get_sprite(list, 2), end);
+		is_looser(get_sprite(list, 2));
 		sfRenderWindow_clear(window, sfBlack);
 	        draw_sprite(list, window);
 		draw_sprite(end, window);
