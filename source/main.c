@@ -722,6 +722,7 @@ int main(int argc, char **argv)
 					destroy_list(&enemy);
 					destroy_list(&spike);
 					destroy_list(&end);
+					destroy_list(&shoot);
 					sfSprite_setPosition(get_sprite(list, 2)->sprite, ini_pos);
 					create_map(&plat, &end, &spike, &enemy, argv[1]);
 				}
