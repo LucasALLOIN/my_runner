@@ -682,6 +682,18 @@ void destroy_list(sprite_list **head)
 	}
 }
 
+void destroy_music(music_list **head)
+{
+	music_list *last = *head;
+
+	while (*head != NULL) {
+		sfMusic_destroy((*head)->music);
+	        last = *head;
+		*head = (*head)->next;
+		free(last);
+        }
+}
+
 int main(int argc, char **argv)
 {
 	sfVideoMode mode = {1280, 800, 32};
@@ -812,6 +824,13 @@ int main(int argc, char **argv)
 		sfRenderWindow_display(window);
 		timer += 1;
 	}
+	destroy_music(&music);
+	destroy_list(&plat);
+	destroy_list(&enemy);
+	destroy_list(&spike);
+	destroy_list(&end);
+	destroy_list(&shoot);
+	destroy_list(&list);
 	sfRenderWindow_destroy(window);
 	return (0);
 }
