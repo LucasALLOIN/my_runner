@@ -695,7 +695,7 @@ int main(int argc, char **argv)
         create_map(&plat, &end, &spike, &enemy, argv[1]);
         while (sfRenderWindow_isOpen(window)) {
 		while (sfRenderWindow_pollEvent(window, &event)) {
-			if (event.type == sfEvtClosed)
+			if (event.type == sfEvtClosed || (event.type == sfEvtKeyPressed && event.key.code == sfKeyQ))
 				sfRenderWindow_close(window);
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeySpace && started)
 				if (is_on_platform(get_sprite(list, 2)->sprite, plat))
