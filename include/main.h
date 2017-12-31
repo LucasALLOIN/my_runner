@@ -19,4 +19,9 @@ typedef struct s_sprite_list {
 	struct s_sprite_list *next;
 } sprite_list;
 
+typedef struct s_text_list {
+	sfText *text;
+	struct  s_text_list *next;
+} text_list;
+
 #endif

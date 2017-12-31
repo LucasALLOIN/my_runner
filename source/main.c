@@ -85,6 +85,51 @@ sfIntRect rect_city(sfSprite *city)
         return (res);
 }
 
+void add_text(text_list **head, char *value, sfVector2f pos, sfColor color)
+{
+	text_list *new_node = malloc(sizeof(text_list));
+	text_list *last = *head;
+	sfText *text = sfText_create();
+	sfFont *font = sfFont_createFromFile("ressources/arcade.ttf");
+
+	new_node->text = text;
+	sfText_setString(text, value);
+	sfText_setFont(text, font);
+	sfText_setCharacterSize(text, 50);
+	sfText_setPosition(text, pos);
+	sfText_setColor(text, color);
+	new_node->next = NULL;
+	if (*head == NULL) {
+                *head = new_node;
+                return;
+        }
+        while (last->next != NULL)
+                last = last->next;
+        last->next = new_node;
+}
+
+void add_menu(sprite_list **head, char *text_path)
+{
+ 	sprite_list *new_node = malloc(sizeof(sprite_list));
+        sprite_list *last = *head;
+	sfVector2f p = {0, 0}; 
+        sfSprite *sprite = sfSprite_create();
+
+	new_node->texture = sfTexture_createFromFile(text_path, NULL);
+	new_node->sprite = sprite;
+        sfSprite_setTexture(new_node->sprite, new_node->texture, sfTrue);
+	sfSprite_setPosition(new_node->sprite, p);
+        new_node->position = p;
+        new_node->next = NULL;
+        if (*head == NULL) {
+		*head = new_node;
+                return;
+        }
+ 	while (last->next != NULL)
+                last = last->next;
+        last->next = new_node;
+}
+
 void add_sprite(sprite_list **head, char *text_path, sfVector2f p, sfIntRect r)
 {
 	sprite_list *new_node = malloc(sizeof(sprite_list));
@@ -173,6 +218,14 @@ void draw_sprite(sprite_list *list, sfRenderWindow *window)
 	}
 }
 
+void draw_text(text_list *text, sfRenderWindow *window)
+{
+	while (text != NULL) {
+		sfRenderWindow_drawText(window, text->text, NULL);
+		text = text->next;
+	}
+}
+
 sprite_list *get_sprite(sprite_list *list, int pos)
 {
 	int i = 0;
@@ -182,7 +235,67 @@ sprite_list *get_sprite(sprite_list *list, int pos)
 	return (list);
 }
 
-void degat(sprite_list *player, int mod)
+char *my_malloc(unsigned int size)
+{
+        char *mall = malloc(size);
+
+        for (unsigned int i = 0; i < size; i = i + 1)
+                mall[i] = '\0';
+        return (mall);
+}
+
+char *my_itoa(int num)
+{
+	int i = 0;
+	int rem;
+	int len = 0;
+        int n = num;
+	char *result;
+
+        while (n != 0) {
+ 	        len = len + 1;
+		n /= 10;
+	}
+	result = my_malloc(len + 1);
+	for (; i < len; i = i + 1) {
+	        rem = num % 10;
+                num = num / 10;
+		result[len - (i + 1)] = rem + '0';
+        }
+        result[len] = '\0';
+ 	return (result);
+}
+
+void update_life(text_list *text, int value)
+{
+	char *val;
+
+	val = my_itoa(value);
+	text = text->next;
+	text = text->next;
+	text = text->next;
+	sfText_setString(text->text, val);
+	free(val);
+}
+
+void update_score(text_list *text, int valeur, int mod)
+{
+	static int value = 0;
+	sfVector2f score_pos2 = {230, 730};
+	char *val;
+
+	if (mod)
+		value = 0;
+	value += valeur;
+	val = my_itoa(value);
+        text = text->next;
+        text = text->next;
+	sfText_setPosition(text->text, score_pos2);
+        sfText_setString(text->text, val);
+        free(val);
+}
+
+void degat(sprite_list *player, text_list *text, int mod)
 {
 	static int timer = 0;
 	static int damaged = 0;
@@ -191,15 +304,15 @@ void degat(sprite_list *player, int mod)
 
 	if (mod == 1 && !damaged) {
 		player->life -= 1;
+		update_life(text, player->life);
 		damaged = 1;
 	}
 	if (timer < 180 && damaged) {
-		if (timer % 10 == 0) {
+		if (timer % 10 == 0)
 			sfSprite_setColor(player->sprite, color);
-		} else if (timer % 5 == 0 && timer % 10 != 0) {
+		else if (timer % 5 == 0 && timer % 10 != 0)
 			sfSprite_setColor(player->sprite, color2);
-		}
-		timer += 1;
+	        timer += 1;
 	} else if (timer >= 180) {
 		timer = 0;
 		damaged = 0;
@@ -351,7 +464,7 @@ int is_on_enemy(sfSprite *player, sprite_list *enemy)
         return (0);
 }
 
-int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy)
+int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_list *text)
 {
 	sfVector2f shoot_pos;
 	sfVector2f enemy_pos;
@@ -366,13 +479,14 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy)
 			if (shoot_pos.x > enemy_pos.x + 40 && shoot_pos.x < enemy_pos.x + 100 && shoot_pos.y > enemy_pos.y - 20 && shoot_pos.y < enemy_pos.y + 149 && shoot->mod == 0) {
 				sfSprite_move(shoot->sprite, move);
 				move.y += 200;
+				update_score(text, 50, 0);
 				sfSprite_move(enemy->sprite, move);
 			}
 			enemy = enemy->next;
 		}
 	        if (shoot->mod == 1 && shoot_pos.x > p_pos.x + 30 && shoot_pos.x < p_pos.x + 60 && shoot_pos.y > p_pos.y -20 && shoot_pos.y < p_pos.y + 149) {
 			sfSprite_move(shoot->sprite, move);
-		        degat(p, 1);
+		        degat(p, text, 1);
 		}
 		enemy = head;
 	        shoot = shoot->next;
@@ -380,9 +494,10 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy)
 	return (0);
 }
 
-void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy, int timer)
+void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy, text_list *text)
 {
 	sprite_list *p = get_sprite(list, 2);
+	static int timer = 0;
 
 	if (timer % 7 == 0) {
 		while (enemy != NULL) {
@@ -391,7 +506,8 @@ void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy,
 		}
 	}
 	if (is_on_spike(p->sprite, spike) || is_on_enemy(p->sprite, enemy))
-		degat(p, 1);
+		degat(p, text, 1);
+	timer += 1;
 }
 
 void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, sprite_list **enemy, char *map)
@@ -443,6 +559,7 @@ void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, spri
 		enemy_pos.x = 0;
 	        nline += 1;
         }
+	fclose(fd);
 }
 
 void plat_mov(sprite_list *plat)
@@ -485,18 +602,47 @@ void enemy_shoot(sprite_list **shoot, sprite_list *enemy)
 	}
 }
 
-void is_looser(sprite_list *player)
+void is_looser(sprite_list *player, int *loose)
 {
 	sfVector2f p = sfSprite_getPosition(player->sprite);
 
-	if (p.y > 800 || player->life < 0)
-		printf("%s\n", "C'est la mort fdp");
+	if (p.y > 800 || player->life < 1) {
+		*loose = 1;
+	}
 }
 
-void is_winner(sprite_list *player, sprite_list *end)
+void is_winner(sprite_list *player, sprite_list *end, int *win)
 {
 	if (is_on_end(player->sprite, end)) {
-		printf("%s\n", "C'est la win");
+	        *win = 1;
+	}
+}
+
+void draw_specific_sprite(sprite_list *list, sfRenderWindow *window)
+{
+	sfRenderWindow_drawSprite(window, list->sprite, NULL);
+}
+
+void draw_text_wl(text_list *list, sfRenderWindow *window)
+{
+	sfVector2f score_wl = {542, 508};
+		
+	list = list->next;
+	list = list->next;
+	sfText_setPosition(list->text, score_wl);
+	sfRenderWindow_drawText(window, list->text, NULL);
+}
+
+void destroy_list(sprite_list **head)
+{
+	sprite_list *last = *head;
+
+	while (*head != NULL) {
+		sfSprite_destroy((*head)->sprite);
+		sfTexture_destroy((*head)->texture);
+		last = *head;
+		*head = (*head)->next;
+		free(last);
 	}
 }
 
@@ -509,12 +655,22 @@ int main(int argc, char **argv)
 	sfVector2f back_pos = {0, 0};
 	sfIntRect back_rect = {10, 300, 1280, 720};
 	sfIntRect city_rect = {0, 750, 1280, 720};
-        sprite_list *list = NULL;
+	sfVector2f score_pos = {30, 730};
+	sfVector2f life_pos = {1000, 730};
+        sfVector2f life_pos2 = {1150, 730};
+	sprite_list *list = NULL;
+	sprite_list *menu = NULL;
 	sprite_list *plat = NULL;
 	sprite_list *end = NULL;
 	sprite_list *spike = NULL;
 	sprite_list *enemy = NULL;
 	sprite_list *shoot = NULL;
+	text_list *text = NULL;
+	int started = 0;
+	int help = 0;
+	int pause = 0;
+	int win = 0;
+	int loose = 0;
 	int timer = 0;
 
 	(void) argc;
@@ -526,38 +682,88 @@ int main(int argc, char **argv)
         add_sprite(&list, "ressources/background.png", back_pos, back_rect);
 	add_sprite(&list, "ressources/city.png", back_pos, city_rect);
 	add_sprite(&list, "ressources/player.png", ini_pos, rect_calculator());
+	add_menu(&menu, "ressources/menu/menu.png");
+        add_menu(&menu, "ressources/menu/help.png");
+        add_menu(&menu, "ressources/menu/pause.png");
+	add_menu(&menu, "ressources/menu/win.png");
+	add_menu(&menu, "ressources/menu/loose.png");
+	add_text(&text, "Score   ", score_pos, sfGreen);
+	add_text(&text, "Life   ", life_pos, sfRed);
+	add_text(&text, "0", score_pos, sfGreen);
+        add_text(&text, "3", life_pos2, sfRed);
 	get_sprite(list, 2)->life = 3;
         create_map(&plat, &end, &spike, &enemy, argv[1]);
         while (sfRenderWindow_isOpen(window)) {
 		while (sfRenderWindow_pollEvent(window, &event)) {
 			if (event.type == sfEvtClosed)
 				sfRenderWindow_close(window);
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeySpace)
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeySpace && started)
 				if (is_on_platform(get_sprite(list, 2)->sprite, plat))
 				    jump(get_sprite(list, 2)->sprite, 1);
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyS)
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyS && started)
 				add_shoot(&shoot, get_sprite(list, 2)->sprite, 0);
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyReturn && !started && !help)
+				started = 1;
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyH && !started)
+				help = 1;
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && !started)
+                                help = 0;
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyP && started && !win && !loose)
+                                pause = 1;
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && started && !win && !loose)
+                                pause = 0;
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyR && started && (win || loose)) {
+					win = 0;
+					loose = 0;
+					update_score(text, 0, 1);
+					get_sprite(list, 2)->life = 3;
+					update_life(text, 3);
+					destroy_list(&plat);
+					destroy_list(&enemy);
+					destroy_list(&spike);
+					destroy_list(&end);
+					sfSprite_setPosition(get_sprite(list, 2)->sprite, ini_pos);
+					create_map(&plat, &end, &spike, &enemy, argv[1]);
+				}
+
 		}
-		enemy_shoot(&shoot, enemy); 
-        	apply_action(list, plat, timer);
-		apply_action_two(list, spike, enemy, timer);
-		plat_mov(plat);
-		plat_mov(end);
-		plat_mov(spike);
-		plat_mov(enemy);
-		shoot_mov(shoot);
-		is_on_shoot(get_sprite(list, 2), shoot, enemy);
-		degat(get_sprite(list, 2), 0);
-		is_winner(get_sprite(list, 2), end);
-		is_looser(get_sprite(list, 2));
 		sfRenderWindow_clear(window, sfBlack);
-	        draw_sprite(list, window);
-		draw_sprite(end, window);
-		draw_sprite(spike, window);
-		draw_sprite(shoot, window);
-		draw_sprite(enemy, window);
-		draw_sprite(get_sprite(list, 2), window);
-		draw_sprite(plat, window);
+		if (started && !pause && !win && !loose) {
+			enemy_shoot(&shoot, enemy); 
+			apply_action(list, plat, timer);
+			apply_action_two(list, spike, enemy, text);
+			plat_mov(plat);
+			plat_mov(end);
+			plat_mov(spike);
+			plat_mov(enemy);
+			shoot_mov(shoot);
+			is_on_shoot(get_sprite(list, 2), shoot, enemy, text);
+			degat(get_sprite(list, 2), text, 0);
+			is_winner(get_sprite(list, 2), end, &win);
+			is_looser(get_sprite(list, 2), &loose);
+			update_score(text, 1, 0);
+			timer += 1;
+			draw_sprite(list, window);
+			draw_sprite(end, window);
+			draw_sprite(spike, window);
+			draw_sprite(shoot, window);
+			draw_sprite(enemy, window);
+			draw_sprite(get_sprite(list, 2), window);
+			draw_sprite(plat, window);
+			draw_text(text, window);
+		} else if (!started) {
+			draw_specific_sprite(get_sprite(menu, 0), window);
+			if (help)
+				draw_specific_sprite(get_sprite(menu, 1), window);
+		} else if (pause) {
+			draw_specific_sprite(get_sprite(menu, 2), window);
+		} else if (win) {
+			draw_specific_sprite(get_sprite(menu, 3), window);
+			draw_text_wl(text, window);
+		} else if (loose) {
+			draw_specific_sprite(get_sprite(menu, 4), window);
+			draw_text_wl(text, window);
+		}
         	sfRenderWindow_display(window);
 		timer += 1;
 	}
