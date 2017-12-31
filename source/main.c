@@ -12,6 +12,7 @@
 #include <SFML/Graphics.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include "my.h"
 #include "main.h"
 
 const char *const enemy[] = {"ressources/enemy/testicule.png", \
@@ -20,7 +21,7 @@ const char *const enemy[] = {"ressources/enemy/testicule.png", \
 
 sfIntRect rect_calculator()
 {
-        sfIntRect res;
+	sfIntRect res;
 	static int pos = 0;
 	int dec = 0;
 
@@ -28,33 +29,33 @@ sfIntRect rect_calculator()
 		dec = 5;
 	else
 		dec = 5 * pos + 5;
-        res.top = 178;
-        res.left = pos * 124 + dec;
+	res.top = 178;
+	res.left = pos * 124 + dec;
 	res.width = 124;
-        res.height = 147;
-        pos = pos + 1;
-        if (pos == 4)
-                pos = 0;
-        return (res);
+	res.height = 147;
+	pos = pos + 1;
+	if (pos == 4)
+		pos = 0;
+	return (res);
 }
 
 sfIntRect rect_enemy(int *pos)
 {
-        sfIntRect res;
+	sfIntRect res;
 	int dec = 0;
 
-        if (*pos == 0)
-                dec = 5;
-        else
-                dec = 5 * *pos + 5;
-        res.top = 178;
-        res.left = *pos * 124 + dec;
+	if (*pos == 0)
+		dec = 5;
+	else
+		dec = 5 * *pos + 5;
+	res.top = 178;
+	res.left = *pos * 124 + dec;
 	res.width = 124;
-        res.height = 147;
+	res.height = 147;
 	*pos = *pos + 1;
-        if (*pos == 4)
+	if (*pos == 4)
 		*pos = 0;
-        return (res);
+	return (res);
 }
 
 sfIntRect rect_background(sfSprite *background)
@@ -73,16 +74,44 @@ sfIntRect rect_background(sfSprite *background)
 
 sfIntRect rect_city(sfSprite *city)
 {
-        sfIntRect res;
-        sfIntRect old = sfSprite_getTextureRect(city);
+	sfIntRect res;
+	sfIntRect old = sfSprite_getTextureRect(city);
 
-        res.left = old.left + 5;
-        res.top = old.top;
-        res.width = old.width;
-        res.height = old.height;
-        if (res.left >= 2999)
+	res.left = old.left + 5;
+	res.top = old.top;
+	res.width = old.width;
+	res.height = old.height;
+	if (res.left >= 2999)
 		res.left = 0;
-        return (res);
+	return (res);
+}
+
+void play_music(music_list *music, char *to_play)
+{
+	while (music != NULL) {
+		if (my_strcmp(music->data, to_play) == 0)
+			sfMusic_play(music->music);
+		music = music->next;
+	}
+}
+
+void add_music(music_list **head, char *music_path, char *data)
+{
+	music_list *new_node = malloc(sizeof(music_list));
+	music_list *last = *head;
+	sfMusic *music;
+
+	music = sfMusic_createFromFile(music_path);
+	new_node->music = music;
+	my_strcpy(new_node->data, data);
+	new_node->next = NULL;
+	if (*head == NULL) {
+		*head = new_node;
+		return;
+	}
+	while (last->next != NULL)
+		last = last->next;
+	last->next = new_node;
 }
 
 void add_text(text_list **head, char *value, sfVector2f pos, sfColor color)
@@ -100,34 +129,34 @@ void add_text(text_list **head, char *value, sfVector2f pos, sfColor color)
 	sfText_setColor(text, color);
 	new_node->next = NULL;
 	if (*head == NULL) {
-                *head = new_node;
-                return;
-        }
-        while (last->next != NULL)
-                last = last->next;
-        last->next = new_node;
+		*head = new_node;
+		return;
+	}
+	while (last->next != NULL)
+		last = last->next;
+	last->next = new_node;
 }
 
 void add_menu(sprite_list **head, char *text_path)
 {
- 	sprite_list *new_node = malloc(sizeof(sprite_list));
-        sprite_list *last = *head;
+	sprite_list *new_node = malloc(sizeof(sprite_list));
+	sprite_list *last = *head;
 	sfVector2f p = {0, 0}; 
-        sfSprite *sprite = sfSprite_create();
+	sfSprite *sprite = sfSprite_create();
 
 	new_node->texture = sfTexture_createFromFile(text_path, NULL);
 	new_node->sprite = sprite;
-        sfSprite_setTexture(new_node->sprite, new_node->texture, sfTrue);
+	sfSprite_setTexture(new_node->sprite, new_node->texture, sfTrue);
 	sfSprite_setPosition(new_node->sprite, p);
-        new_node->position = p;
-        new_node->next = NULL;
-        if (*head == NULL) {
+	new_node->position = p;
+	new_node->next = NULL;
+	if (*head == NULL) {
 		*head = new_node;
-                return;
-        }
- 	while (last->next != NULL)
-                last = last->next;
-        last->next = new_node;
+		return;
+	}
+	while (last->next != NULL)
+		last = last->next;
+	last->next = new_node;
 }
 
 void add_sprite(sprite_list **head, char *text_path, sfVector2f p, sfIntRect r)
@@ -155,59 +184,49 @@ void add_sprite(sprite_list **head, char *text_path, sfVector2f p, sfIntRect r)
 
 void add_enemy(sprite_list **head, sfVector2f p)
 {
-        sprite_list *new_node = malloc(sizeof(sprite_list));
-        sprite_list *last = *head;
-        sfSprite *sprite = sfSprite_create();
+	sprite_list *new_node = malloc(sizeof(sprite_list));
+	sprite_list *last = *head;
+	sfSprite *sprite = sfSprite_create();
 	int ran = rand() % 3;
 
 	new_node->texture = sfTexture_createFromFile(enemy[ran], NULL);
-        new_node->sprite = sprite;
+	new_node->sprite = sprite;
 	sfSprite_setTexture(new_node->sprite, new_node->texture, sfTrue);
-        sfSprite_setPosition(new_node->sprite, p);
+	sfSprite_setPosition(new_node->sprite, p);
 	new_node->pos = 0;
-        sfSprite_setTextureRect(new_node->sprite, rect_enemy(&new_node->pos));
-        new_node->next = NULL;
+	sfSprite_setTextureRect(new_node->sprite, rect_enemy(&new_node->pos));
+	new_node->next = NULL;
 	if (*head == NULL) {
-                *head = new_node;
-                return;
-        }
-        while (last->next != NULL)
-                last = last->next;
-        last->next = new_node;
+		*head = new_node;
+		return;
+	}
+	while (last->next != NULL)
+		last = last->next;
+	last->next = new_node;
 }
 
 void add_shoot(sprite_list **head, sfSprite *from, int mod)
 {
 	sprite_list *new_node = malloc(sizeof(sprite_list));
-        sprite_list *last = *head;
-        sfSprite *sprite = sfSprite_create();
+	sprite_list *last = *head;
+	sfSprite *sprite = sfSprite_create();
 	sfVector2f pos = {0, sfSprite_getPosition(from).y + 60};
 	float x = sfSprite_getPosition(from).x;
 
 	pos.x = (mod == 0) ? x + 50 : x - 50;
-        new_node->texture = sfTexture_createFromFile("ressources/shoot.png", NULL);
-        new_node->sprite = sprite;
+	new_node->texture = sfTexture_createFromFile("ressources/shoot.png", NULL);
+	new_node->sprite = sprite;
 	sfSprite_setTexture(new_node->sprite, new_node->texture, sfTrue);
-        sfSprite_setPosition(new_node->sprite, pos);
+	sfSprite_setPosition(new_node->sprite, pos);
 	new_node->mod = mod;
-        new_node->next = NULL;
-        if (*head == NULL) {
-                *head = new_node;
-                return;
-        }
-        while (last->next != NULL)
-                last = last->next;
-        last->next = new_node;
-}
-
-void free_list(sprite_list *head)
-{
-	sprite_list *last = head;
-
-	while (last != NULL) {
-		free(last);
-		last = last->next;
+	new_node->next = NULL;
+	if (*head == NULL) {
+		*head = new_node;
+		return;
 	}
+	while (last->next != NULL)
+		last = last->next;
+	last->next = new_node;
 }
 
 void draw_sprite(sprite_list *list, sfRenderWindow *window)
@@ -237,11 +256,11 @@ sprite_list *get_sprite(sprite_list *list, int pos)
 
 char *my_malloc(unsigned int size)
 {
-        char *mall = malloc(size);
+	char *mall = malloc(size);
 
-        for (unsigned int i = 0; i < size; i = i + 1)
-                mall[i] = '\0';
-        return (mall);
+	for (unsigned int i = 0; i < size; i = i + 1)
+		mall[i] = '\0';
+	return (mall);
 }
 
 char *my_itoa(int num)
@@ -249,21 +268,21 @@ char *my_itoa(int num)
 	int i = 0;
 	int rem;
 	int len = 0;
-        int n = num;
+	int n = num;
 	char *result;
 
-        while (n != 0) {
- 	        len = len + 1;
+	while (n != 0) {
+		len = len + 1;
 		n /= 10;
 	}
 	result = my_malloc(len + 1);
 	for (; i < len; i = i + 1) {
-	        rem = num % 10;
-                num = num / 10;
+		rem = num % 10;
+		num = num / 10;
 		result[len - (i + 1)] = rem + '0';
-        }
-        result[len] = '\0';
- 	return (result);
+	}
+	result[len] = '\0';
+	return (result);
 }
 
 void update_life(text_list *text, int value)
@@ -288,18 +307,18 @@ void update_score(text_list *text, int valeur, int mod)
 		value = 0;
 	value += valeur;
 	val = my_itoa(value);
-        text = text->next;
-        text = text->next;
+	text = text->next;
+	text = text->next;
 	sfText_setPosition(text->text, score_pos2);
-        sfText_setString(text->text, val);
-        free(val);
+	sfText_setString(text->text, val);
+	free(val);
 }
 
 void degat(sprite_list *player, text_list *text, int mod)
 {
 	static int timer = 0;
 	static int damaged = 0;
-        sfColor color = {255, 0, 0, 128};
+	sfColor color = {255, 0, 0, 128};
 	sfColor color2 = {255, 255, 255, 255};
 
 	if (mod == 1 && !damaged) {
@@ -312,7 +331,7 @@ void degat(sprite_list *player, text_list *text, int mod)
 			sfSprite_setColor(player->sprite, color);
 		else if (timer % 5 == 0 && timer % 10 != 0)
 			sfSprite_setColor(player->sprite, color2);
-	        timer += 1;
+		timer += 1;
 	} else if (timer >= 180) {
 		timer = 0;
 		damaged = 0;
@@ -334,23 +353,25 @@ void add_list(sprite_list **head, sprite_list *new_node)
 
 sprite_list *is_plat_on_x(sfSprite *player, sprite_list *plat)
 {
-        sfVector2f player_co = sfSprite_getPosition(player);
-        sfVector2f plat_pos;
+	sfVector2f player_co = sfSprite_getPosition(player);
+	sfVector2f plat_pos;
 
-        while (plat != NULL) {
-                plat_pos = sfSprite_getPosition(plat->sprite);
-                if (player_co.y < plat_pos.y && (player_co.x + 55 >= plat_pos.x - 35 && player_co.x + 55 <= plat_pos.x + 130)) {
+	while (plat != NULL) {
+		plat_pos = sfSprite_getPosition(plat->sprite);
+		if (player_co.y < plat_pos.y && \
+		(player_co.x + 55 >= plat_pos.x - 35 && \
+		player_co.x + 55 <= plat_pos.x + 130)) {
 			return(plat);
 		}
-                plat = plat->next;
-        }
-        return (NULL);
+		plat = plat->next;
+	}
+	return (NULL);
 }
 
 int is_plat_on_y(sfSprite *player, sprite_list *plat)
 {
 	sfVector2f player_co = sfSprite_getPosition(player);
-        sfVector2f plat_pos;
+	sfVector2f plat_pos;
 	float y = player_co.y + 146;
 
 	if (plat == NULL)
@@ -358,22 +379,24 @@ int is_plat_on_y(sfSprite *player, sprite_list *plat)
 	plat_pos = sfSprite_getPosition(plat->sprite);
 	if (y >= plat_pos.y - 4 && y <= plat_pos.y + 4)
 		return (1);
-        return (0);
+	return (0);
 }
 
 int is_on_end(sfSprite *player, sprite_list *end)
 {
-        sfVector2f player_co = sfSprite_getPosition(player);
-        sfVector2f end_pos;
+	sfVector2f player_co = sfSprite_getPosition(player);
+	sfVector2f end_pos;
 
-        while (end != NULL) {
-                end_pos = sfSprite_getPosition(end->sprite);
-		if (end_pos.y < player_co.y && end_pos.y > player_co.y - 100 && (player_co.x >= end_pos.x && player_co.x <= end_pos.x + 100)) {
-                        return(1);
-                }
-                end = end->next;
+	while (end != NULL) {
+		end_pos = sfSprite_getPosition(end->sprite);
+		if (end_pos.y < player_co.y && \
+		end_pos.y > player_co.y - 100 && \
+		(player_co.x >= end_pos.x && player_co.x <= end_pos.x + 100)) {
+			return(1);
+		}
+		end = end->next;
 	}
-        return (0);
+	return (0);
 }
 
 int jump(sfSprite *player, int action)
@@ -424,7 +447,7 @@ void apply_action(sprite_list *list, sprite_list *plat, int timer)
 		sfSprite_setTextureRect(player, rect_calculator());
 	if (timer % 1 == 0)
 		is_jump = jump(player, 2);
-        if (is_jump || !is_fall) {
+	if (is_jump || !is_fall) {
 		sfSprite_setTextureRect(player, no_anim);
 	}
 	if (!is_fall && !is_jump) {
@@ -435,36 +458,41 @@ void apply_action(sprite_list *list, sprite_list *plat, int timer)
 int is_on_spike(sfSprite *player, sprite_list *spike)
 {
 	sfVector2f player_co = sfSprite_getPosition(player);
-        sfVector2f spike_pos;
+	sfVector2f spike_pos;
 	float y = player_co.y + 147;
 	
-        while (spike != NULL) {
-                spike_pos = sfSprite_getPosition(spike->sprite);
-                if (y > spike_pos.y + 20 && spike_pos.y > player_co.y - 100 && (player_co.x + 100 > spike_pos.x && player_co.x < spike_pos.x + 65)) {
-                        return(1);
-                }
-                spike = spike->next;
+	while (spike != NULL) {
+		spike_pos = sfSprite_getPosition(spike->sprite);
+		if (y > spike_pos.y + 20 && \
+		spike_pos.y > player_co.y - 100 && \
+		(player_co.x + 100 > spike_pos.x && \
+		player_co.x < spike_pos.x + 65)) {
+			return(1);
+		}
+		spike = spike->next;
 	}
-        return (0);
+	return (0);
 }
 
 int is_on_enemy(sfSprite *player, sprite_list *enemy)
 {
-        sfVector2f player_co = sfSprite_getPosition(player);
-        sfVector2f enemy_pos;
-        float y = player_co.y + 147;
+	sfVector2f player_co = sfSprite_getPosition(player);
+	sfVector2f enemy_pos;
+	float y = player_co.y + 147;
 
-        while (enemy != NULL) {
-                enemy_pos = sfSprite_getPosition(enemy->sprite);
-                if (y > enemy_pos.y && enemy_pos.y > player_co.y - 50 && (player_co.x + 50 > enemy_pos.x && player_co.x < enemy_pos.x + 50)) {
-                        return(1);
-                }
-                enemy = enemy->next;
-        }
-        return (0);
+	while (enemy != NULL) {
+		enemy_pos = sfSprite_getPosition(enemy->sprite);
+		if (y > enemy_pos.y && enemy_pos.y > \
+		player_co.y - 50 && (player_co.x + 50 > enemy_pos.x \
+		&& player_co.x < enemy_pos.x + 50)) {
+			return(1);
+		}
+		enemy = enemy->next;
+	}
+	return (0);
 }
 
-int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_list *text)
+int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_list *text, music_list *music)
 {
 	sfVector2f shoot_pos;
 	sfVector2f enemy_pos;
@@ -480,6 +508,7 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_lis
 				sfSprite_move(shoot->sprite, move);
 				move.y += 200;
 				update_score(text, 50, 0);
+				play_music(music, "kill");
 				sfSprite_move(enemy->sprite, move);
 			}
 			enemy = enemy->next;
@@ -487,6 +516,7 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_lis
 	        if (shoot->mod == 1 && shoot_pos.x > p_pos.x + 30 && shoot_pos.x < p_pos.x + 60 && shoot_pos.y > p_pos.y -20 && shoot_pos.y < p_pos.y + 149) {
 			sfSprite_move(shoot->sprite, move);
 		        degat(p, text, 1);
+			play_music(music, "damage");
 		}
 		enemy = head;
 	        shoot = shoot->next;
@@ -494,7 +524,7 @@ int is_on_shoot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, text_lis
 	return (0);
 }
 
-void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy, text_list *text)
+void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy, text_list *text, music_list *music)
 {
 	sprite_list *p = get_sprite(list, 2);
 	static int timer = 0;
@@ -505,14 +535,16 @@ void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy,
 			enemy = enemy->next;
 		}
 	}
-	if (is_on_spike(p->sprite, spike) || is_on_enemy(p->sprite, enemy))
+	if (is_on_spike(p->sprite, spike) || is_on_enemy(p->sprite, enemy)) {
 		degat(p, text, 1);
+		play_music(music, "damage");
+	}
 	timer += 1;
 }
 
 void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, sprite_list **enemy, char *map)
 {
-        FILE *fd = fopen(map, "r");
+	FILE *fd = fopen(map, "r");
 	char *line = NULL;
 	sfVector2f plat_pos = {0, 196};
 	sfVector2f end_pos = {0, -45};
@@ -558,7 +590,7 @@ void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, spri
 		plat_pos.x = 0;
 		enemy_pos.x = 0;
 	        nline += 1;
-        }
+	}
 	fclose(fd);
 }
 
@@ -588,7 +620,7 @@ void shoot_mov(sprite_list *shoot)
 	}
 }
 
-void enemy_shoot(sprite_list **shoot, sprite_list *enemy)
+void enemy_shoot(sprite_list **shoot, sprite_list *enemy, music_list *music)
 {
 	int ran = rand() % 500;
 	sfVector2f pos;
@@ -596,25 +628,29 @@ void enemy_shoot(sprite_list **shoot, sprite_list *enemy)
 	while (enemy != NULL) {
 		ran = rand() % 500;
 		pos = sfSprite_getPosition(enemy->sprite);
-		if (ran > 497 && pos.x < 1280 && pos.x > 0)
+		if (ran > 497 && pos.x < 1280 && pos.x > 0) {
 			add_shoot(shoot, enemy->sprite, 1);
+			play_music(music, "shoot");
+		}
 		enemy = enemy->next;
 	}
 }
 
-void is_looser(sprite_list *player, int *loose)
+void is_looser(sprite_list *player, int *loose, music_list *music)
 {
 	sfVector2f p = sfSprite_getPosition(player->sprite);
 
 	if (p.y > 800 || player->life < 1) {
 		*loose = 1;
+		play_music(music, "loose");
 	}
 }
 
-void is_winner(sprite_list *player, sprite_list *end, int *win)
+void is_winner(sprite_list *player, sprite_list *end, int *win, music_list *music)
 {
 	if (is_on_end(player->sprite, end)) {
 	        *win = 1;
+		play_music(music, "win");
 	}
 }
 
@@ -657,7 +693,7 @@ int main(int argc, char **argv)
 	sfIntRect city_rect = {0, 750, 1280, 720};
 	sfVector2f score_pos = {30, 730};
 	sfVector2f life_pos = {1000, 730};
-        sfVector2f life_pos2 = {1150, 730};
+	sfVector2f life_pos2 = {1150, 730};
 	sprite_list *list = NULL;
 	sprite_list *menu = NULL;
 	sprite_list *plat = NULL;
@@ -666,6 +702,7 @@ int main(int argc, char **argv)
 	sprite_list *enemy = NULL;
 	sprite_list *shoot = NULL;
 	text_list *text = NULL;
+	music_list *music = NULL;
 	int started = 0;
 	int help = 0;
 	int pause = 0;
@@ -679,39 +716,46 @@ int main(int argc, char **argv)
 	if (!window)
 		return (84);
 	sfRenderWindow_setFramerateLimit(window, 60);
-        add_sprite(&list, "ressources/background.png", back_pos, back_rect);
+	add_sprite(&list, "ressources/background.png", back_pos, back_rect);
 	add_sprite(&list, "ressources/city.png", back_pos, city_rect);
 	add_sprite(&list, "ressources/player.png", ini_pos, rect_calculator());
 	add_menu(&menu, "ressources/menu/menu.png");
-        add_menu(&menu, "ressources/menu/help.png");
-        add_menu(&menu, "ressources/menu/pause.png");
+	add_menu(&menu, "ressources/menu/help.png");
+	add_menu(&menu, "ressources/menu/pause.png");
 	add_menu(&menu, "ressources/menu/win.png");
 	add_menu(&menu, "ressources/menu/loose.png");
 	add_text(&text, "Score   ", score_pos, sfGreen);
 	add_text(&text, "Life   ", life_pos, sfRed);
 	add_text(&text, "0", score_pos, sfGreen);
-        add_text(&text, "3", life_pos2, sfRed);
+	add_text(&text, "3", life_pos2, sfRed);
+	add_music(&music, "ressources/sounds/win.ogg", "win");
+	add_music(&music, "ressources/sounds/loose.ogg", "loose");
+       	add_music(&music, "ressources/sounds/damage.ogg", "damage");
+	add_music(&music, "ressources/sounds/kill.ogg", "kill");
+	add_music(&music, "ressources/sounds/shoot.ogg", "shoot");
 	get_sprite(list, 2)->life = 3;
-        create_map(&plat, &end, &spike, &enemy, argv[1]);
-        while (sfRenderWindow_isOpen(window)) {
+	create_map(&plat, &end, &spike, &enemy, argv[1]);
+	while (sfRenderWindow_isOpen(window)) {
 		while (sfRenderWindow_pollEvent(window, &event)) {
 			if (event.type == sfEvtClosed || (event.type == sfEvtKeyPressed && event.key.code == sfKeyQ))
 				sfRenderWindow_close(window);
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeySpace && started)
 				if (is_on_platform(get_sprite(list, 2)->sprite, plat))
 				    jump(get_sprite(list, 2)->sprite, 1);
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyS && started)
+			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyS && started) {
 				add_shoot(&shoot, get_sprite(list, 2)->sprite, 0);
+				play_music(music, "shoot");
+			}
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyReturn && !started && !help)
 				started = 1;
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyH && !started)
 				help = 1;
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && !started)
-                                help = 0;
+				help = 0;
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyP && started && !win && !loose)
-                                pause = 1;
+				pause = 1;
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && started && !win && !loose)
-                                pause = 0;
+				pause = 0;
 			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyR && started && (win || loose)) {
 					win = 0;
 					loose = 0;
@@ -730,18 +774,18 @@ int main(int argc, char **argv)
 		}
 		sfRenderWindow_clear(window, sfBlack);
 		if (started && !pause && !win && !loose) {
-			enemy_shoot(&shoot, enemy); 
+			enemy_shoot(&shoot, enemy, music); 
 			apply_action(list, plat, timer);
-			apply_action_two(list, spike, enemy, text);
+			apply_action_two(list, spike, enemy, text, music);
 			plat_mov(plat);
 			plat_mov(end);
 			plat_mov(spike);
 			plat_mov(enemy);
 			shoot_mov(shoot);
-			is_on_shoot(get_sprite(list, 2), shoot, enemy, text);
+			is_on_shoot(get_sprite(list, 2), shoot, enemy, text, music);
 			degat(get_sprite(list, 2), text, 0);
-			is_winner(get_sprite(list, 2), end, &win);
-			is_looser(get_sprite(list, 2), &loose);
+			is_winner(get_sprite(list, 2), end, &win, music);
+			is_looser(get_sprite(list, 2), &loose, music);
 			update_score(text, 1, 0);
 			timer += 1;
 			draw_sprite(list, window);
@@ -765,7 +809,7 @@ int main(int argc, char **argv)
 			draw_specific_sprite(get_sprite(menu, 4), window);
 			draw_text_wl(text, window);
 		}
-        	sfRenderWindow_display(window);
+		sfRenderWindow_display(window);
 		timer += 1;
 	}
 	sfRenderWindow_destroy(window);
