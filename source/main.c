@@ -401,7 +401,7 @@ int is_on_end(sfSprite *player, sprite_list *end)
 
 int jump(sfSprite *player, int action)
 {
-	sfVector2f jump = {0, -7};
+	sfVector2f jump = {0, -6.0};
 	static int is_jump = 0;
 	static int timer = 0;
 
@@ -464,8 +464,8 @@ int is_on_spike(sfSprite *player, sprite_list *spike)
 	while (spike != NULL) {
 		spike_pos = sfSprite_getPosition(spike->sprite);
 		if (y > spike_pos.y + 20 && \
-		spike_pos.y > player_co.y - 100 && \
-		(player_co.x + 100 > spike_pos.x && \
+		spike_pos.y > player_co.y - 70 && \
+		(player_co.x + 90 > spike_pos.x && \
 		player_co.x < spike_pos.x + 65)) {
 			return(1);
 		}
@@ -542,61 +542,91 @@ void apply_action_two(sprite_list *list, sprite_list *spike, sprite_list *enemy,
 	timer += 1;
 }
 
-void create_map(sprite_list **list, sprite_list **end, sprite_list **spike, sprite_list **enemy, char *map)
+void init_map_two(map *m)
 {
-	FILE *fd = fopen(map, "r");
-	char *line = NULL;
-	sfVector2f plat_pos = {0, 196};
-	sfVector2f end_pos = {0, -45};
-	sfVector2f spike_pos = {0, 129};
-	sfVector2f enemy_pos = {0, 49};
-	size_t len = 0;
-	char *path = "ressources/platform.png";
-	char *path2 = "ressources/portal.png";
-	char *path3 = "ressources/spike.png";
-	sfIntRect plat_rect = {0, 0, 129, 65};
-	sfIntRect end_rect = {0, 0, 200, 263};
-	sfIntRect spike_rect = {0, 0, 129, 72};
-	int nline = 0;
+	m->plat_rect.left = 0;
+        m->plat_rect.top = 0;
+ 	m->plat_rect.width = 129;
+	m->plat_rect.height = 65;
+        m->end_rect.left = 0;
+        m->end_rect.top = 0;
+	m->end_rect.width = 200;
+        m->end_rect.height = 263;
+        m->spike_rect.left = 0;
+	m->spike_rect.top = 0;
+        m->spike_rect.width = 129;
+        m->spike_rect.height = 72;
+        m->nline = 0;
+}
 
-	while ((getline(&line, &len, fd)) != -1) {
-		for (int i = 0; line[i]; i = i + 1) {
-			if (nline % 2 == 0) {
-				end_pos.x -= 30;
-				if (line[i] == 'E')
-					add_sprite(end, path2, end_pos, end_rect);
-				if (line[i] == 'S')
-					add_sprite(spike, path3, spike_pos, spike_rect);
-				if (line[i] == 'K')
-					add_enemy(enemy, enemy_pos);
-				spike_pos.x += 130;
-				enemy_pos.x += 130;
-				end_pos.x += 160;
-			} else {
-				if (line[i] == 'P')
-					add_sprite(list, path, plat_pos, plat_rect);
-				plat_pos.x += 130;
-			}
-		}
-		if (nline % 2 == 0) {
-			spike_pos.y += 216;
-			end_pos.y += 216;
-			enemy_pos.y += 216;
-		} else {
-			plat_pos.y += 216;
-		}
-		end_pos.x = 0;
-		spike_pos.x = 0;
-		plat_pos.x = 0;
-		enemy_pos.x = 0;
-	        nline += 1;
+void init_map(map *m, char *maps)
+{
+	m->fd = fopen(maps, "r");
+        m->line = NULL;
+        m->plat_pos.x = 0;
+	m->plat_pos.y = 196;
+        m->end_pos.x = 0;
+        m->end_pos.y = -45;
+        m->sp_pos.x = 0;
+        m->sp_pos.y = 129;
+        m->enemy_pos.x = 0;
+        m->enemy_pos.y = 49;
+	m->len = 0;
+	init_map_two(m);
+}
+
+void create_map_nline(map *m, game *game, int i)
+{
+	char *p = "ressources/platform.png";
+        char *path2 = "ressources/portal.png";
+        char *p3 = "ressources/spike.png";
+
+	if (m->nline % 2 == 0) {
+		m->end_pos.x -= 30;
+		if (m->line[i] == 'E')
+			add_sprite(&game->end, path2, m->end_pos, m->end_rect);
+		if (m->line[i] == 'S')
+			add_sprite(&game->spike, p3, m->sp_pos, m->spike_rect);
+		if (m->line[i] == 'K')
+			add_enemy(&game->enemy, m->enemy_pos);
+		m->sp_pos.x += 130;
+		m->enemy_pos.x += 130;
+		m->end_pos.x += 160;
+	} else {
+		if (m->line[i] == 'P')
+			add_sprite(&game->plat, p, m->plat_pos, m->plat_rect);
+		m->plat_pos.x += 130;
 	}
-	fclose(fd);
+}
+
+void create_map(game *game, char *maps)
+{
+	map *m = malloc(sizeof(map));
+
+        init_map(m, maps);
+	while ((getline(&m->line, &m->len, m->fd)) != -1) {
+		for (int i = 0; m->line[i]; i = i + 1) {
+			create_map_nline(m, game, i);
+		}
+		if (m->nline % 2 == 0) {
+			m->sp_pos.y += 216;
+			m->end_pos.y += 216;
+			m->enemy_pos.y += 216;
+		} else
+			m->plat_pos.y += 216;
+		m->end_pos.x = 0;
+		m->sp_pos.x = 0;
+		m->plat_pos.x = 0;
+		m->enemy_pos.x = 0;
+	        m->nline += 1;
+	}
+	fclose(m->fd);
+	free(m);
 }
 
 void plat_mov(sprite_list *plat)
 {
-	sfVector2f move = {-2.5, 0};
+	sfVector2f move = {-3.0, 0};
 	
 	while (plat != NULL) {
 		sfSprite_move(plat->sprite, move);
@@ -646,11 +676,11 @@ void is_looser(sprite_list *player, int *loose, music_list *music)
 	}
 }
 
-void is_winner(sprite_list *player, sprite_list *end, int *win, music_list *music)
+void is_winner(sprite_list *player, sprite_list *end, int *win, music_list *m)
 {
 	if (is_on_end(player->sprite, end)) {
 	        *win = 1;
-		play_music(music, "win");
+		play_music(m, "win");
 	}
 }
 
@@ -694,143 +724,277 @@ void destroy_music(music_list **head)
         }
 }
 
+void game_init_two(game *game)
+{
+	game->life_pos.x = 1000;
+	game->life_pos.y = 730;
+	game->life_pos2.x = 1150;
+	game->life_pos2.y = 730;
+	game->list = NULL;
+	game->menu = NULL;
+	game->plat = NULL;
+	game->end = NULL;
+	game->spike = NULL;
+	game->enemy = NULL;
+	game->shoot = NULL;
+	game->text = NULL;
+	game->music = NULL;
+	game->started = 0;
+	game->help = 0;
+	game->pause = 0;
+	game->win = 0;
+	game->loose = 0;
+	game->timer = 0;
+}
+
+void game_init(game *game, char **argv)
+{
+        srand((long int) argv);
+	game->mode.width = 1280;
+	game->mode.height = 800;
+	game->mode.bitsPerPixel = 32;
+	game->window = sfRenderWindow_create(game->mode, "my_runner", sfResize | \
+	sfClose, NULL);
+	game->ini_pos.x = 0;
+	game->ini_pos.y = 400;
+	game->back_pos.x = 0;
+	game->back_pos.y = 0;
+	game->back_rect.left = 300;
+	game->back_rect.top = 10;
+	game->back_rect.width = 1280;
+	game->back_rect.height = 720;
+	game->city_rect.left = 0;
+	game->city_rect.top = 750;
+	game->city_rect.width = 1280;
+	game->city_rect.height = 720;
+	game->score_pos.x = 30;
+	game->score_pos.y = 730;
+	game_init_two(game);
+}
+
+int verify_error(int argc, char **argv)
+{
+	int fd;
+	
+	if (argc < 2)
+		return (1);
+	fd = open(argv[1], O_RDONLY);
+	if (fd < 0 && my_strcmp(argv[1], "-h") != 0)
+		return (1);
+	close(fd);
+	return (0);
+}
+
+int verify_help(char **argv)
+{
+	if (my_strcmp(argv[1], "-h") == 0) {
+		my_putstr("USAGE\n\tmy_runner map.txt\n\n");
+		my_putstr("OPTION\n -h\tLaunch help mode\n\n");
+		my_putstr("USER INTERACTION\n");
+		my_putstr("\tSpace to jump\n");
+		my_putstr("\tS to shoot\n");
+		return (1);
+	}
+	return (0);
+}
+
+void init_sprite(game *game)
+{
+	add_sprite(&game->list, "ressources/background.png", \
+	game->back_pos, game->back_rect);
+	add_sprite(&game->list, "ressources/city.png", game->back_pos,	\
+	game->city_rect);
+	add_sprite(&game->list, "ressources/player.png", game->ini_pos, \
+	rect_calculator());
+	add_menu(&game->menu, "ressources/menu/menu.png");
+	add_menu(&game->menu, "ressources/menu/help.png");
+	add_menu(&game->menu, "ressources/menu/pause.png");
+	add_menu(&game->menu, "ressources/menu/win.png");
+	add_menu(&game->menu, "ressources/menu/loose.png");
+	add_text(&game->text, "Score   ", game->score_pos, sfGreen);
+	add_text(&game->text, "Life   ", game->life_pos, sfRed);
+	add_text(&game->text, "0", game->score_pos, sfGreen);
+	add_text(&game->text, "3", game->life_pos2, sfRed);
+	add_music(&game->music, "ressources/sounds/win.ogg", "win");
+	add_music(&game->music, "ressources/sounds/loose.ogg", "loose");
+	add_music(&game->music, "ressources/sounds/damage.ogg", "damage");
+	add_music(&game->music, "ressources/sounds/kill.ogg", "kill");
+	add_music(&game->music, "ressources/sounds/shoot.ogg", "shoot");
+	get_sprite(game->list, 2)->life = 3;
+}
+
+void window_close(game *game)
+{
+	if (game->event.type == sfEvtClosed \
+	|| (game->event.type == sfEvtKeyPressed && \
+	game->event.key.code == sfKeyQ))
+		sfRenderWindow_close(game->window);
+}
+
+void jump_maker(game *game)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeySpace && game->started)
+		if (is_on_platform(get_sprite(game->list, 2)->sprite, \
+		game->plat))
+			jump(get_sprite(game->list, 2)->sprite, 1);
+}
+
+void shoot_maker(game *game)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyS && game->started) {
+		add_shoot(&game->shoot, get_sprite(game->list, 2)->sprite, 0);
+		play_music(game->music, "shoot");
+	}
+}
+
+void start_game(game *game)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyReturn && !game->started && !game->help)
+		game->started = 1;
+}
+
+void start_help(game *game)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyH && !game->started)
+		game->help = 1;
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyEscape && !game->started)
+		game->help = 0;
+}
+
+void start_pause(game *game)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyP && game->started && !game->win && !game->loose)
+		game->pause = 1;
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyEscape && game->started && !game->win && !game->loose)
+		game->pause = 0;
+}
+
+void reset_game(game *game, char **argv)
+{
+	if (game->event.type == sfEvtKeyPressed && game->event.key.code == \
+	sfKeyR && game->started && (game->win || game->loose)) {
+		game->win = 0;
+		game->loose = 0;
+		update_score(game->text, 0, 1);
+		get_sprite(game->list, 2)->life = 3;
+		update_life(game->text, 3);
+		destroy_list(&game->plat);
+		destroy_list(&game->enemy);
+		destroy_list(&game->spike);
+		destroy_list(&game->end);
+		destroy_list(&game->shoot);
+		sfSprite_setPosition(get_sprite(game->list, 2)->sprite, \
+		game->ini_pos);
+		create_map(game, argv[1]);
+	}
+}
+
+void draw_all(game *game)
+{
+	draw_sprite(game->list, game->window);
+	draw_sprite(game->end, game->window);
+	draw_sprite(game->spike, game->window);
+	draw_sprite(game->shoot, game->window);
+	draw_sprite(game->enemy, game->window);
+	draw_sprite(get_sprite(game->list, 2), game->window);
+	draw_sprite(game->plat, game->window);
+	draw_text(game->text, game->window);
+}
+
+void action(game *game)
+{
+	enemy_shoot(&game->shoot, game->enemy, game->music);
+	apply_action(game->list, game->plat, game->timer);
+	apply_action_two(game->list, game->spike, game->enemy, game->text, \
+	game->music);
+	plat_mov(game->plat);
+	plat_mov(game->end);
+	plat_mov(game->spike);
+	plat_mov(game->enemy);
+	shoot_mov(game->shoot);
+	is_on_shoot(get_sprite(game->list, 2), game->shoot, game->enemy, \
+	game->text, game->music);
+	degat(get_sprite(game->list, 2), game->text, 0);
+	is_winner(get_sprite(game->list, 2), game->end, &game->win, \
+	game->music);
+	is_looser(get_sprite(game->list, 2), &game->loose, game->music);
+	update_score(game->text, 1, 0);
+	game->timer += 1;
+	draw_all(game);
+}
+
+void destroy_all(game *game)
+{
+	destroy_music(&game->music);
+	destroy_list(&game->plat);
+	destroy_list(&game->enemy);
+	destroy_list(&game->spike);
+	destroy_list(&game->end);
+	destroy_list(&game->shoot);
+	destroy_list(&game->list);
+	sfRenderWindow_destroy(game->window);
+}
+
+void game_handler(game *game)
+{
+	if (game->started && !game->pause && !game->win && !game->loose) {
+		action(game);
+	} else if (!game->started) {
+		draw_specific_sprite(get_sprite(game->menu, 0), game->window);
+		if (game->help)
+			draw_specific_sprite(get_sprite(game->menu, 1), \
+			game->window);
+	} else if (game->pause) {
+		draw_specific_sprite(get_sprite(game->menu, 2), game->window);
+	} else if (game->win) {
+		draw_specific_sprite(get_sprite(game->menu, 3), game->window);
+		draw_text_wl(game->text, game->window);
+	} else if (game->loose) {
+		draw_specific_sprite(get_sprite(game->menu, 4), game->window);
+		draw_text_wl(game->text, game->window);
+	}
+	sfRenderWindow_display(game->window);
+	game->timer += 1;
+}
+
+void event_game(game *game, char **argv)
+{
+	window_close(game);
+	jump_maker(game);
+	shoot_maker(game);
+	start_game(game);
+	start_help(game);
+	start_pause(game);
+	reset_game(game, argv);
+}
+
 int main(int argc, char **argv)
 {
-	sfVideoMode mode = {1280, 800, 32};
-	sfRenderWindow *window;
-	sfEvent event;
-	sfVector2f ini_pos = {0, 400};
-	sfVector2f back_pos = {0, 0};
-	sfIntRect back_rect = {10, 300, 1280, 720};
-	sfIntRect city_rect = {0, 750, 1280, 720};
-	sfVector2f score_pos = {30, 730};
-	sfVector2f life_pos = {1000, 730};
-	sfVector2f life_pos2 = {1150, 730};
-	sprite_list *list = NULL;
-	sprite_list *menu = NULL;
-	sprite_list *plat = NULL;
-	sprite_list *end = NULL;
-	sprite_list *spike = NULL;
-	sprite_list *enemy = NULL;
-	sprite_list *shoot = NULL;
-	text_list *text = NULL;
-	music_list *music = NULL;
-	int started = 0;
-	int help = 0;
-	int pause = 0;
-	int win = 0;
-	int loose = 0;
-	int timer = 0;
+	game *game = malloc(sizeof(*game));
 
-	(void) argc;
-	srand((long int) argv);
-	window = sfRenderWindow_create(mode, "my_runner", sfResize | sfClose, NULL);
-	if (!window)
+	if (verify_error(argc, argv))
 		return (84);
-	sfRenderWindow_setFramerateLimit(window, 60);
-	add_sprite(&list, "ressources/background.png", back_pos, back_rect);
-	add_sprite(&list, "ressources/city.png", back_pos, city_rect);
-	add_sprite(&list, "ressources/player.png", ini_pos, rect_calculator());
-	add_menu(&menu, "ressources/menu/menu.png");
-	add_menu(&menu, "ressources/menu/help.png");
-	add_menu(&menu, "ressources/menu/pause.png");
-	add_menu(&menu, "ressources/menu/win.png");
-	add_menu(&menu, "ressources/menu/loose.png");
-	add_text(&text, "Score   ", score_pos, sfGreen);
-	add_text(&text, "Life   ", life_pos, sfRed);
-	add_text(&text, "0", score_pos, sfGreen);
-	add_text(&text, "3", life_pos2, sfRed);
-	add_music(&music, "ressources/sounds/win.ogg", "win");
-	add_music(&music, "ressources/sounds/loose.ogg", "loose");
-       	add_music(&music, "ressources/sounds/damage.ogg", "damage");
-	add_music(&music, "ressources/sounds/kill.ogg", "kill");
-	add_music(&music, "ressources/sounds/shoot.ogg", "shoot");
-	get_sprite(list, 2)->life = 3;
-	create_map(&plat, &end, &spike, &enemy, argv[1]);
-	while (sfRenderWindow_isOpen(window)) {
-		while (sfRenderWindow_pollEvent(window, &event)) {
-			if (event.type == sfEvtClosed || (event.type == sfEvtKeyPressed && event.key.code == sfKeyQ))
-				sfRenderWindow_close(window);
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeySpace && started)
-				if (is_on_platform(get_sprite(list, 2)->sprite, plat))
-				    jump(get_sprite(list, 2)->sprite, 1);
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyS && started) {
-				add_shoot(&shoot, get_sprite(list, 2)->sprite, 0);
-				play_music(music, "shoot");
-			}
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyReturn && !started && !help)
-				started = 1;
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyH && !started)
-				help = 1;
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && !started)
-				help = 0;
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyP && started && !win && !loose)
-				pause = 1;
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyEscape && started && !win && !loose)
-				pause = 0;
-			if (event.type == sfEvtKeyPressed && event.key.code == sfKeyR && started && (win || loose)) {
-					win = 0;
-					loose = 0;
-					update_score(text, 0, 1);
-					get_sprite(list, 2)->life = 3;
-					update_life(text, 3);
-					destroy_list(&plat);
-					destroy_list(&enemy);
-					destroy_list(&spike);
-					destroy_list(&end);
-					destroy_list(&shoot);
-					sfSprite_setPosition(get_sprite(list, 2)->sprite, ini_pos);
-					create_map(&plat, &end, &spike, &enemy, argv[1]);
-				}
-
-		}
-		sfRenderWindow_clear(window, sfBlack);
-		if (started && !pause && !win && !loose) {
-			enemy_shoot(&shoot, enemy, music); 
-			apply_action(list, plat, timer);
-			apply_action_two(list, spike, enemy, text, music);
-			plat_mov(plat);
-			plat_mov(end);
-			plat_mov(spike);
-			plat_mov(enemy);
-			shoot_mov(shoot);
-			is_on_shoot(get_sprite(list, 2), shoot, enemy, text, music);
-			degat(get_sprite(list, 2), text, 0);
-			is_winner(get_sprite(list, 2), end, &win, music);
-			is_looser(get_sprite(list, 2), &loose, music);
-			update_score(text, 1, 0);
-			timer += 1;
-			draw_sprite(list, window);
-			draw_sprite(end, window);
-			draw_sprite(spike, window);
-			draw_sprite(shoot, window);
-			draw_sprite(enemy, window);
-			draw_sprite(get_sprite(list, 2), window);
-			draw_sprite(plat, window);
-			draw_text(text, window);
-		} else if (!started) {
-			draw_specific_sprite(get_sprite(menu, 0), window);
-			if (help)
-				draw_specific_sprite(get_sprite(menu, 1), window);
-		} else if (pause) {
-			draw_specific_sprite(get_sprite(menu, 2), window);
-		} else if (win) {
-			draw_specific_sprite(get_sprite(menu, 3), window);
-			draw_text_wl(text, window);
-		} else if (loose) {
-			draw_specific_sprite(get_sprite(menu, 4), window);
-			draw_text_wl(text, window);
-		}
-		sfRenderWindow_display(window);
-		timer += 1;
+	if (verify_help(argv))
+		return (0);
+        game_init(game, argv);
+        if (!game->window)
+		return (84);
+	sfRenderWindow_setFramerateLimit(game->window, 60);
+        init_sprite(game);
+        create_map(game, argv[1]);
+	while (sfRenderWindow_isOpen(game->window)) {
+		while (sfRenderWindow_pollEvent(game->window, &game->event))
+			event_game(game, argv);
+	        sfRenderWindow_clear(game->window, sfBlack);
+		game_handler(game);
 	}
-	destroy_music(&music);
-	destroy_list(&plat);
-	destroy_list(&enemy);
-	destroy_list(&spike);
-	destroy_list(&end);
-	destroy_list(&shoot);
-	destroy_list(&list);
-	sfRenderWindow_destroy(window);
+	destroy_all(game);
 	return (0);
 }
