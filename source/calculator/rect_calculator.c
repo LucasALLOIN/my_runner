@@ -15,7 +15,7 @@
 #include "my.h"
 #include "main.h"
 
-sfIntRect rect_calculator()
+sfIntRect rect_calculator(void)
 {
 	sfIntRect res;
 	static int pos = 0;

@@ -72,7 +72,7 @@ typedef struct s_map {
 	int nline;
 } map;
 
-sfIntRect rect_calculator();
+sfIntRect rect_calculator(void);
 sfIntRect rect_enemy(int *pos);
 sfIntRect rect_background(sfSprite *background);
 sfIntRect rect_city(sfSprite *city);
@@ -100,7 +100,7 @@ int is_on_platform(sfSprite *player, sprite_list *plat);
 void apply_action(sprite_list *list, sprite_list *plat, int timer);
 int is_on_spike(sfSprite *player, sprite_list *spike);
 int is_on_enemy(sfSprite *player, sprite_list *enemy);
-void s_enemy(sfVector2f s_p, sprite_list *enemy, sprite_list *shoot, game *game);
+void s_enemy(sfVector2f s_p, sprite_list *enemy, sprite_list *shoot, game *g);
 void shoot_player(sfVector2f s, sprite_list *p, sprite_list *shoot, game *game);
 int on_shot(sprite_list *p, sprite_list *shoot, sprite_list *enemy, game *game);
 void apply_action_two(game *game);

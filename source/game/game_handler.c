@@ -15,6 +15,19 @@
 #include "my.h"
 #include "main.h"
 
+static void game_handler_two(game *game)
+{
+	if (game->pause) {
+		draw_specific_sprite(get_sprite(game->menu, 2), game->window);
+	} else if (game->win) {
+		draw_specific_sprite(get_sprite(game->menu, 3), game->window);
+		draw_text_wl(game->text, game->window);
+	} else if (game->loose) {
+		draw_specific_sprite(get_sprite(game->menu, 4), game->window);
+		draw_text_wl(game->text, game->window);
+	}
+}
+
 void game_handler(game *game)
 {
 	if (game->started && !game->pause && !game->win && !game->loose) {
@@ -24,15 +37,8 @@ void game_handler(game *game)
 		if (game->help)
 			draw_specific_sprite(get_sprite(game->menu, 1), \
 			game->window);
-	} else if (game->pause) {
-		draw_specific_sprite(get_sprite(game->menu, 2), game->window);
-	} else if (game->win) {
-		draw_specific_sprite(get_sprite(game->menu, 3), game->window);
-		draw_text_wl(game->text, game->window);
-	} else if (game->loose) {
-		draw_specific_sprite(get_sprite(game->menu, 4), game->window);
-		draw_text_wl(game->text, game->window);
 	}
+	game_handler_two(game);
 	sfRenderWindow_display(game->window);
 	game->timer += 1;
 }
