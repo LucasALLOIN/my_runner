@@ -17,14 +17,19 @@
 
 const char *const enemy[] = {"ressources/enemy/testicule.png", \
                              "ressources/enemy/enemy1.png", \
-                             "ressources/enemy/enemy2.png"};
+                             "ressources/enemy/enemy2.png", \
+			     "ressources/enemy/enemy3.png", \
+			     "ressources/enemy/enemy4.png", \
+			     "ressources/enemy/enemy5.png", \
+			     "ressources/enemy/enemy6.png", \
+			     "ressources/enemy/enemy7.png"};
 
 void add_enemy(sprite_list **head, sfVector2f p)
 {
 	sprite_list *new_node = malloc(sizeof(sprite_list));
 	sprite_list *last = *head;
 	sfSprite *sprite = sfSprite_create();
-	int ran = rand() % 3;
+	int ran = rand() % 8;
 
 	new_node->texture = sfTexture_createFromFile(enemy[ran], NULL);
 	new_node->sprite = sprite;

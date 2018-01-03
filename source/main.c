@@ -17,7 +17,7 @@
 
 int main(int argc, char **argv)
 {
-	game *game = malloc(sizeof(*game));
+	game *game = malloc(sizeof(struct s_game));
 
 	if (verify_error(argc, argv))
 		return (84);
