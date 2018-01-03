@@ -8,5 +8,6 @@
 *.editorconfig
 *.gcda
 *.gcno
+backup
 units
 my_runner
