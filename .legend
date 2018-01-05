@@ -1,0 +1,11 @@
+The map contain 3 roof.
+The player spawn on the 1st roof.
+Each roof are composed by two line :
+     - The first line is for Spike, Enemy, End portal.
+     - The second line is for platform.
+Legend:
+	O = Nothing
+	P = Platform
+	S = Spike
+	K = Enemy
+	E = End portal
